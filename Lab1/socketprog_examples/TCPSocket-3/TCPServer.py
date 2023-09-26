@@ -20,15 +20,14 @@ while True:
     try:
         sentence = connectionSocket.recv(1024)
     except socket.error as err:
-    	print("Recv error: ", err)
-        
+        print("Recv error: ", err)  
     if sentence:
         capitalizedSentence = sentence.decode().upper()
 
         connectionSocket.send(capitalizedSentence.encode())
 
     else:
-	    print("Connection is broken")
-    
+        print("Connection is broken")
+
     connectionSocket.close()
 

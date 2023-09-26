@@ -21,45 +21,44 @@ def main(argv):
         # accept new connection
         conn, addr = sockfd.accept() 
 
-        
-        
-        
-        
-        
-        
-        # receive file name/size message from client         
-        sentence = conn.recv(100000000)
-        
-        
+        # receive file name/size message from client  
+        try:       
+            sentence = conn.recv(1024)
+        except socket.error as err:
+            print("Recv error: ", err)
         
         #use Python string split function to retrieve file name and file size from the received message
-        sentence = sentence.decode('utf-8')
-        fname, filesize = sentence.split(":")
+        if sentence:
+            sentence = sentence.decode('utf-8')
+            fname, filesize = sentence.split(":")
         
-        print("Open a file with name \'%s\' with size %s bytes" % (fname, filesize))
+            print("Open a file with name \'%s\' with size %s bytes" % (fname, filesize))
+            
+            #create a new file with fname
         
-        #create a new file with fname
-       
-        fd = open(fname, 'wb')
-       
-        remaining = int(filesize)
+            fd = open(fname, 'wb')
+        
+            remaining = int(filesize)
 
-        conn.send(b"OK")
+            conn.send(b"OK")
 
 
-        print("Start receiving . . .")
-        while remaining > 0:
-            # receive the file content into rmsg and write into the file
-            rmsg = conn.recv(remaining)
-            fd.write(rmsg)
-            remaining -= len(rmsg)
+            print("Start receiving . . .")
+            while remaining > 0:
+                # receive the file content into rmsg and write into the file
+                rmsg = conn.recv(remaining)
+                fd.write(rmsg)
+                remaining -= len(rmsg)
 
-        print("[Completed]")
-        fd.close()
+            print("[Completed]")
+            fd.close()
+
+        else:
+            print("Connection is broken")
+
         conn.close()
         
-    sockfd.close()
-    
+    sockfd.close()        
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
