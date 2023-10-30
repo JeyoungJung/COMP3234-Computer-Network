@@ -6,7 +6,7 @@ import sys
 def main(argv):
     # get port number from argv
     serverPort = int(argv[1])
-   
+    
     # create socket and bind
     sockfd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
