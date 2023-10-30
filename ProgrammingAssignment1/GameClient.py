@@ -9,14 +9,14 @@ class GameClient:
     def send_command(self):
         while True:
             command = input()
-            self.client.send(command.encode("utf-8"))
+            self.client.send(command.encode())
             if command.startswith("/exit"):
                 sys.exit()
 
     def receive_response(self):
         while True:
             try:
-                response = self.client.recv(1024).decode("utf-8")
+                response = self.client.recv(1024).decode()
                 if not response:  # Server connection lost
                     print("Server connection lost")
                     sys.exit()

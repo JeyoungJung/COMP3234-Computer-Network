@@ -10,6 +10,7 @@ class GameServer:
         self.credentials = {
             username: password for username, password in credentials_list
         }
+        # room's key is the room number and the value is a tuple composed of (client socket info, username)
         self.rooms = {0: [], 1: [], 2: [], 3: [], 4: []}
         self.guesses = {0: [], 1: [], 2: [], 3: [], 4: []}
 
@@ -23,26 +24,26 @@ class GameServer:
     def broadcast(self, room_number, message):
         # Send a message to all clients in a room
         for client, username in self.rooms[room_number]:
-            client.send(message.encode("utf-8"))
+            client.send(message.encode())
 
     def handle_client(self, client):
         try:
-            client.send("Please input your user name: ".encode("utf-8"))
-            username = client.recv(1024).decode("utf-8")
+            client.send("Please input your user name: ".encode())
+            username = client.recv(1024).decode()
 
-            client.send("Please input your password: ".encode("utf-8"))
-            password = client.recv(1024).decode("utf-8")
+            client.send("Please input your password: ".encode())
+            password = client.recv(1024).decode()
 
             if username in self.credentials and self.credentials[username] == password:
-                client.send("1001 Authentication successful".encode("utf-8"))
+                client.send("1001 Authentication successful".encode())
                 while True:
-                    command = client.recv(1024).decode("utf-8")
+                    command = client.recv(1024).decode()
                     if command.startswith("/list"):
                         with self.rooms_lock:
                             message = "3001 " + str(len(self.rooms))
                             for room_number, players in self.rooms.items():
                                 message += " " + str(len(players))
-                            client.send(message.encode("utf-8"))
+                            client.send(message.encode())
                     elif command.startswith("/enter"):
                         room_number = int(command.split(" ")[1])
                         with self.rooms_lock:
@@ -54,15 +55,17 @@ class GameServer:
                                         "3012 Game started. Please guess true or false",
                                     )
                                 else:
-                                    client.send("3011 Wait".encode("utf-8"))
+                                    client.send("3011 Wait".encode())
                             else:
-                                client.send("3013 The room is full".encode("utf-8"))
+                                client.send("3013 The room is full".encode())
                     elif command.startswith("/guess"):
                         with self.rooms_lock:
                             # finding the room number the current client is in
                             room_number = [
                                 key
                                 for key, val in self.rooms.items()
+                                # val is composed of (client, username)
+                                # we are making another list with just clients (without username) to check if client is in it
                                 if client in [i[0] for i in val]
                             ][0]
                         guess = command.split(" ")[1]
@@ -88,26 +91,28 @@ class GameServer:
                                         self.guesses[room_number][loser_client][0],
                                     )
                                     winner_client.send(
-                                        "3021 You are the winner".encode("utf-8")
+                                        "3021 You are the winner".encode()
                                     )
                                     loser_client.send(
-                                        "3022 You lost this game".encode("utf-8")
+                                        "3022 You lost this game".encode()
                                     )
                                 self.guesses[room_number] = []
                                 self.rooms[room_number] = []
                     elif command.startswith("/exit"):
-                        client.send("4001 Bye bye".encode("utf-8"))
+                        client.send("4001 Bye bye".encode())
                         client.close()
                         with self.rooms_lock:
                             for room_number in self.rooms:
                                 for player in self.rooms[room_number]:
                                     if player[0] == client:
                                         self.rooms[room_number].remove(player)
-                                        break
+                                        break                                    
                         return
+                    else:
+                        client.send("4002 Unrecognized message".encode())
 
             else:
-                client.send("1002 Authentication failed".encode("utf-8"))
+                client.send("1002 Authentication failed".encode())
         except:
             print("Client disconnected\n")
             client.close()
