@@ -2,7 +2,7 @@ import threading, socket, sys
 
 
 class GameClient:
-    def __init__(self, host="localhost", port=4003):
+    def __init__(self, host="localhost", port=4000):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client.connect((host, port))
 

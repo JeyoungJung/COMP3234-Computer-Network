@@ -4,7 +4,7 @@ import random
 
 
 class GameServer:
-    def __init__(self, host="localhost", port=4003):
+    def __init__(self, host="localhost", port=4000):
         with open("UserInfo.txt", "r") as f:
             credentials_list = [line.strip().split(":") for line in f]
         self.credentials = {
@@ -106,7 +106,11 @@ class GameServer:
                                 for player in self.rooms[room_number]:
                                     if player[0] == client:
                                         self.rooms[room_number].remove(player)
-                                        break                                    
+                                        if len(self.rooms[room_number]) == 1:  # Only one player remains
+                                            remaining_player = self.rooms[room_number][0]
+                                            remaining_player[0].send("The other player has disconnected. You are the winner!".encode())
+                                            self.rooms[room_number] = []  # Empty the room
+                                        break                                 
                         return
                     else:
                         client.send("4002 Unrecognized message".encode())
@@ -114,13 +118,17 @@ class GameServer:
             else:
                 client.send("1002 Authentication failed".encode())
         except:
-            print("Client disconnected\n")
+            print("Client disconnected")
             client.close()
             with self.rooms_lock:
                 for room_number in self.rooms:
                     for player in self.rooms[room_number]:
                         if player[0] == client:
                             self.rooms[room_number].remove(player)
+                            if len(self.rooms[room_number]) == 1:  # Only one player remains
+                                remaining_player = self.rooms[room_number][0]
+                                remaining_player[0].send("The other player has disconnected. You are the winner!".encode())
+                                self.rooms[room_number] = []  # Empty the room
                             break
 
     def start(self):
