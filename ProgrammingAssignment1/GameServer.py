@@ -11,8 +11,8 @@ class GameServer:
             username: password for username, password in credentials_list
         }
         # room's key is the room number and the value is a tuple composed of (client socket info, username)
-        self.rooms = {0: [], 1: [], 2: [], 3: [], 4: []}
-        self.guesses = {0: [], 1: [], 2: [], 3: [], 4: []}
+        self.rooms = {1: [], 2: [], 3: [], 4: [], 5: []}
+        self.guesses = {1: [], 2: [], 3: [], 4: [], 5: []}
 
         self.rooms_lock = threading.Lock()
         self.guesses_lock = threading.Lock()
@@ -46,18 +46,21 @@ class GameServer:
                             client.send(message.encode())
                     elif command.startswith("/enter"):
                         room_number = int(command.split(" ")[1])
-                        with self.rooms_lock:
-                            if len(self.rooms[room_number]) < 2:
-                                self.rooms[room_number].append((client, username))
-                                if len(self.rooms[room_number]) == 2:
-                                    self.broadcast(
-                                        room_number,
-                                        "3012 Game started. Please guess true or false",
-                                    )
+                        if room_number < 1 or room_number > 5:
+                            client.send("Invalid room number".encode())
+                        else:
+                            with self.rooms_lock:
+                                if len(self.rooms[room_number]) < 2:
+                                    self.rooms[room_number].append((client, username))
+                                    if len(self.rooms[room_number]) == 2:
+                                        self.broadcast(
+                                            room_number,
+                                            "3012 Game started. Please guess true or false",
+                                        )
+                                    else:
+                                        client.send("3011 Wait".encode())
                                 else:
-                                    client.send("3011 Wait".encode())
-                            else:
-                                client.send("3013 The room is full".encode())
+                                    client.send("3013 The room is full".encode())
                     elif command.startswith("/guess"):
                         with self.rooms_lock:
                             # finding the room number the current client is in
